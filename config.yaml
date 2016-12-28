@@ -1,9 +1,9 @@
 region: us-east-1
 
-function_name: my_lambda_function
+function_name: spending_data_entries
 handler: service.handler
-# role: lambda_basic_execution
-description: My first lambda function
+role: lambda_api
+description: Fetches NTTO spending data, builds a CSV document and stores it in S3
 
 # if access key and secret are left blank, boto will use the credentials
 # defined in the [default] section of ~/.aws/credentials.

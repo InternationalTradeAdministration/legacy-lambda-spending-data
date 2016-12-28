@@ -1,8 +1,8 @@
 import xlrd, json, csv, collections, math
-from constants import SHEET_NAMES, EXPORT_ROWS, IMPORT_ROWS, HEADER_ROW, EXPORT_FIELD_NAMES, IMPORT_FIELD_NAMES
+from constants import SHEET_NAMES, EXPORT_ROWS, IMPORT_ROWS, HEADER_ROW, EXPORT_FIELD_NAMES, IMPORT_FIELD_NAMES, SHEET_SPECIFIC_FIELD_NAMES
 
-def main(): 
-  book = xlrd.open_workbook("spending_data.xlsx")
+def run(download_path = "spending_data.xlsx"): 
+  book = xlrd.open_workbook(download_path)
   data = collections.OrderedDict()
 
   for sheet_name in SHEET_NAMES:
@@ -14,51 +14,54 @@ def main():
 
   #print json.dumps(data, indent=4)
   entries = expand_entries(data)
-  write_csv_file(entries)
+  return entries
 
 def process_rows(sheet, row_numbers, field_names, data):
   for row_num in row_numbers:
     row = sheet.row_values(row_num-1)
 
     for index, cell in enumerate(row):
-      if index == 0:
+      if index == 0: # skip field names column
         continue
       if index >= len(list(filter(None, sheet.row_values(HEADER_ROW-1)))): # Need this check to not break Saudi Arabia
         break
       year = str(int(sheet.cell_value(rowx=HEADER_ROW-1, colx=index)))
+      extract_value_from_row(year, data, field_names, row, cell)
 
-      if not year in data:
-        data[year] = collections.OrderedDict()
-      if str(row[0]).strip() in field_names:
-        key = field_names[str(row[0]).strip()]
 
-        if cell == '(*)':
-          cell = 0
-        elif not is_number(cell):
-          cell = None
-        data[year][key] = cell
+def extract_value_from_row(year, data, field_names, row, cell):
+  if not year in data:
+    data[year] = collections.OrderedDict()
+  if str(row[0]).strip() in field_names:
+    key = field_names[str(row[0]).strip()]
+    data[year][key] = extract_from_cell(cell)
+  else:
+    for key, value in SHEET_SPECIFIC_FIELD_NAMES.iteritems():
+      if key in str(row[0]).strip():
+        data[year][value] = extract_from_cell(cell)
 
 def expand_entries(data):
   entries = [];
   for country, year_dicts in data.items():
     for year, entry in year_dicts.iteritems():
-      entry['year'] = year
-      entry['country_or_region'] = country
-      entries.append(entry)
+      if len(entries) == 0:
+        entries.append(",".join(entry.keys() + ['year', 'country_or_region']))
+
+      entries.append(",".join(entry.values() + [year, country]))
   return entries
 
-def write_csv_file(entries):
-  keys = entries[0].keys()
-  with open('spending_data.csv', 'wb') as output_file:
-    dict_writer = csv.DictWriter(output_file, keys)
-    dict_writer.writeheader()
-    dict_writer.writerows(entries)
+def extract_from_cell(cell):
+  if cell == '(*)':
+    cell = 0
+  elif not is_number(cell):
+    cell = ""
+  return str(cell)
 
-def is_number(s):
+def is_number(string):
   try:
-      float(s)
+      float(string)
       return True
   except ValueError:
       return False
 
-main()
+#run()
