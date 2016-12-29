@@ -13,4 +13,4 @@ def handler(event, context):
       download_path = '/tmp/{}{}'.format(uuid.uuid4(), key)
       bucket.download_file(key, download_path)
       entries = excel_parser.run(download_path)
-      s3.Object('ntto-spending-data', 'entries.csv').put(Body="\n".join(entries), ContentType='application/csv')
+      s3.Object('ntto-spending-data-csv', 'entries.csv').put(Body="\n".join(entries), ContentType='application/csv')
