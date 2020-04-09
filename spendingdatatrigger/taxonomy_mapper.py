@@ -29,7 +29,7 @@ class TaxonomyMapper:
     if "Countries" in term["taxonomies"]:
       country = term["name"]
       taxonomy_response = self.cached_response_for(TAXONOMY_TEMPLATE % (os.environ['API_KEY'], country))
-      return taxonomy_response["results"][0]["related_terms"]["world_regions"]
+      return taxonomy_response["results"][0]["object_properties"]["has_broader"][0]["label"]
     elif "World Regions" in term["taxonomies"]:
       return [term["name"] for term in mapper_response]
 
@@ -43,6 +43,6 @@ class TaxonomyMapper:
     if url in self.request_cache:
       return self.request_cache[url]
     else:
-      response = json.loads(urllib.urlopen(url).read())
+      response = json.loads(urllib.request.urlopen(url.replace(' ', '%20')).read())
       self.request_cache[url] = response
       return response

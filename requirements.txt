@@ -1,3 +1,4 @@
 python-lambda
-boto3
+azure-storage
+azure-functions
 xlrd

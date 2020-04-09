@@ -1,13 +1,13 @@
 import xlrd, json, csv, collections, math
-from constants import SHEET_NAMES, EXPORT_ROWS, IMPORT_ROWS, HEADER_ROW, EXPORT_FIELD_NAMES, IMPORT_FIELD_NAMES, SHEET_SPECIFIC_FIELD_NAMES
-from taxonomy_mapper import TaxonomyMapper
+from .constants import SHEET_NAMES, EXPORT_ROWS, IMPORT_ROWS, HEADER_ROW, EXPORT_FIELD_NAMES, IMPORT_FIELD_NAMES, SHEET_SPECIFIC_FIELD_NAMES
+from .taxonomy_mapper import TaxonomyMapper
 
 mapper_config = [{'starting_field': 'country_or_region', 'desired_field': 'country'}, {'starting_field': 'country_or_region', 'desired_field': 'world_region'}]
 mapper_source = 'NTTOSpendingData'
 taxonomy_mapper = TaxonomyMapper({'config': mapper_config, 'mapper_source': mapper_source})
 
-def run(download_path = "spending_data.xlsx"): 
-  book = xlrd.open_workbook(download_path)
+def run(blob): 
+  book = xlrd.open_workbook(file_contents=blob.read())
   data = collections.OrderedDict()
 
   for sheet_name in SHEET_NAMES:
@@ -17,7 +17,6 @@ def run(download_path = "spending_data.xlsx"):
     process_rows(sheet, EXPORT_ROWS, EXPORT_FIELD_NAMES, data[sheet_name])
     process_rows(sheet, IMPORT_ROWS, IMPORT_FIELD_NAMES, data[sheet_name])
 
-  #print json.dumps(data, indent=4)
   entries = expand_entries(data)
   return entries
 
@@ -41,14 +40,14 @@ def extract_value_from_row(year, data, field_names, row, cell):
     key = field_names[str(row[0]).strip()]
     data[year][key] = extract_from_cell(cell)
   else:
-    for key, value in SHEET_SPECIFIC_FIELD_NAMES.iteritems():
+    for key, value in SHEET_SPECIFIC_FIELD_NAMES.items():
       if key in str(row[0]).strip():
         data[year][value] = extract_from_cell(cell)
 
 def expand_entries(data):
   entries = [];
   for country, year_dicts in data.items():
-    for year, entry in year_dicts.iteritems():
+    for year, entry in year_dicts.items():
       entry['year'] = year
       entry['country_or_region'] = country
 
